@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Epicicloide</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="epicicloideCanvas" width="800" height="600"></canvas>
+    <script>
+
+        // Variables importantes
+
+        const canvas = document.getElementById('epicicloideCanvas');
+        const ctx = canvas.getContext('2d');
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+        const r = 50; // Cambia el radio según tus preferencias
+        const k = 0.57721566490153286060; // Cambia el valor de k según tus preferencias
+        const numRevolutions = 5.1; // Cambia el número de revoluciones deseadas
+        const numPointsPerRevolution = 10000;
+        const speed = 0.005; // Modifica la velocidad de animación
+
+        const cartesianColorline = 'orange'; // Color ejes
+        const epicicloideColorline = 'blue';
+        const dotColor = 'blue';
+
+        const MCircleColorLine = 'red'; // Color círculo principal
+        const SCircleColorLine = "#333"; // Color círculo secundario
+        const radioColorline = '#333'; // Color radio círculo secundario
+
+
+        let t = 0;
+        let numPoints = 0;
+        let circleX = centerX; // Inicializa el centro del círculo secundario en el centro del canvas
+        let circleY = centerY; // Inicializa el centro del círculo secundario en el centro del canvas
+
+        let x, y; // Variables para almacenar las coordenadas x e y
+
+        // Función para dibujar líneas punteadas
+        function drawDashedLine(context, x1, y1, x2, y2, dashLength) {
+            const deltaX = x2 - x1;
+            const deltaY = y2 - y1;
+            const numDashes = Math.floor(Math.sqrt(deltaX * deltaX + deltaY * deltaY) / dashLength);
+
+            for (let i = 0; i < numDashes; i++) {
+                if (i % 2 === 0) {
+                    context.moveTo(x1 + (deltaX / numDashes) * i, y1 + (deltaY / numDashes) * i);
+                } else {
+                    context.lineTo(x1 + (deltaX / numDashes) * (i + 1), y1 + (deltaY / numDashes) * (i + 1));
+                }
+            }
+        }
+
+        // Función para dibujar la epicicloide paso a paso
+        function drawEpicicloidStepByStep() {
+
+            function drawConnectingLine() {
+                ctx.strokeStyle = radioColorline; // Color de la línea
+                ctx.beginPath();
+                ctx.moveTo(circleX, circleY); // Mueve al centro del círculo secundario
+                ctx.lineTo(centerX + x, centerY + y); // Línea hacia el punto de trazado de la epicicloide
+                ctx.stroke();
+            }
+
+            function drawFrame() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                // Dibuja los ejes punteados
+                ctx.strokeStyle = cartesianColorline; // Color de las rayas
+                ctx.setLineDash([5, 5]);
+                ctx.beginPath();
+                drawDashedLine(ctx, centerX, 0, centerX, canvas.height, 10); // Eje vertical
+                drawDashedLine(ctx, 0, centerY, canvas.width, centerY, 10); // Eje horizontal
+                ctx.stroke();
+
+                // Dibuja la epicicloide paso a paso
+                ctx.setLineDash([]); // Restaura el estilo de línea sólida
+                ctx.strokeStyle = epicicloideColorline; // Establece el color de la epicicloide
+                ctx.beginPath();
+
+                numPoints = t * numPointsPerRevolution;
+
+                for (let i = 0; i < numPoints; i++) {
+                    const theta = (i / numPointsPerRevolution) * Math.PI * 2 * numRevolutions;
+                    x = r * (k + 1) * Math.cos(theta) - r * Math.cos((k + 1) * theta);
+                    y = r * (k + 1) * Math.sin(theta) - r * Math.sin((k + 1) * theta);
+                    ctx.lineTo(centerX + x, centerY + y);
+                }
+
+                ctx.stroke();
+
+                // Dibuja el círculo principal
+                ctx.strokeStyle = MCircleColorLine;
+                ctx.beginPath();
+                const mainCircleRadius = r * (1 + k) - r;
+                ctx.arc(centerX, centerY, mainCircleRadius, 0, 2 * Math.PI);
+                ctx.stroke();
+
+                // Dibuja el círculo secundario con radio
+                ctx.strokeStyle = SCircleColorLine;
+                ctx.beginPath();
+                ctx.arc(circleX, circleY, r, 0, 2 * Math.PI);
+                ctx.stroke();
+
+                // Dibuja la línea que conecta el centro del círculo secundario y el punto de trazado de la epicicloide
+                drawConnectingLine();
+
+                // Dibuja el punto actual de trazado de la epicicloide en azul
+                ctx.fillStyle = dotColor;
+                ctx.beginPath();
+                ctx.arc(centerX + x, centerY + y, 3, 0, 2 * Math.PI);
+                ctx.fill();
+
+                if (t <= numRevolutions) { // Detener la animación cuando se alcanza el número de revoluciones
+                    t += speed; // Ajusta la velocidad de animación
+
+                    // Calcula la posición del círculo secundario
+                    const theta = t * 2 * Math.PI * numRevolutions;
+                    circleX = centerX + (r + r * k) * Math.cos(theta);
+                    circleY = centerY + (r + r * k) * Math.sin(theta);
+
+                    requestAnimationFrame(drawFrame);
+                }
+            }
+
+            drawFrame();
+        }
+
+        // Llama a la función cuando el DOM esté completamente cargado
+        window.addEventListener('load', drawEpicicloidStepByStep);
+    </script>
+</body>
+</html>
